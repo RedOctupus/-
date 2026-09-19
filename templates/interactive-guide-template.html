@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI金融项目开发指南 · 交互版</title>
+
+<!-- 第三方库（CDN）：markdown 渲染 / 代码高亮 / 流程图 / 思维导图 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@5.1.1/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.18.12/dist/browser/index.iife.js"></script>
+<script>/* markmap-lib 与 markmap-view 都占用 window.markmap，先保存 lib 的引用 */
+window.__markmapLib = window.markmap;</script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.18.12/dist/browser/index.js"></script>
+
+<style>
+/* ============ 主题变量 ============ */
+:root{
+  --bg:#faf6ef; --bg-alt:#f4eee1; --surface:#fffdf8; --text:#2b2620; --muted:#6f6656;
+  --accent:#c2410c; --accent-strong:#9a3412; --accent-soft:#fdeadb;
+  --border:#e6dcc8; --code-bg:#1e1e2e; --shadow:0 2px 10px rgba(90,70,40,.08);
+  --badge-must:#c2410c; --badge-rec:#b45309; --badge-opt:#6b7280;
+}
+html.dark{
+  --bg:#16140f; --bg-alt:#1e1a13; --surface:#221e16; --text:#e8e2d5; --muted:#a89d89;
+  --accent:#f07b3f; --accent-strong:#fb9a5b; --accent-soft:#3a2a1c;
+  --border:#3a332a; --code-bg:#11111b; --shadow:0 2px 10px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  font-size:16px; line-height:1.85;
+}
+
+/* ============ 顶栏 ============ */
+#progressbar{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:1001;transition:width .1s}
+header{
+  position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:12px;
+  padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow);
+}
+header .title{font-weight:800;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .title small{color:var(--muted);font-weight:400;margin-left:8px;font-size:12px}
+header .spacer{flex:1}
+.btn{
+  border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;
+  padding:6px 14px;font-size:13px;cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-strong);color:#fff}
+#hamburger{display:none}
+
+/* ============ 布局 ============ */
+#layout{display:flex;align-items:flex-start}
+#sidebar{
+  width:290px;flex-shrink:0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;
+  padding:18px 14px 60px;border-right:1px solid var(--border);background:var(--bg-alt);
+}
+#sidebar .search{width:100%;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;margin-bottom:12px;outline:none}
+#sidebar .search:focus{border-color:var(--accent)}
+#toc{list-style:none;margin:0;padding:0}
+#toc>li{margin-bottom:2px}
+#toc a{
+  display:block;padding:6px 10px;border-radius:7px;color:var(--text);text-decoration:none;
+  font-size:13.5px;line-height:1.5;border-left:3px solid transparent;
+}
+#toc a:hover{background:var(--accent-soft)}
+#toc a.active{background:var(--accent-soft);border-left-color:var(--accent);color:var(--accent-strong);font-weight:600}
+#toc .toc-h3 a{padding-left:26px;font-size:12.5px;color:var(--muted)}
+#toc .toc-h3 a.active{color:var(--accent)}
+main{flex:1;min-width:0;max-width:980px;margin:0 auto;padding:36px 48px 120px}
+
+/* ============ 正文排版 ============ */
+#content h1{font-size:30px;line-height:1.4;margin:0 0 8px;border-bottom:3px solid var(--accent);padding-bottom:14px}
+#content h2{
+  font-size:23px;margin:0;padding:26px 14px 12px;cursor:pointer;user-select:none;
+  border-bottom:2px solid var(--border);display:flex;align-items:baseline;gap:10px;
+  background:var(--bg-alt);border-radius:10px 10px 0 0;
+}
+#content h2:hover{color:var(--accent-strong)}
+#content h2 .caret{display:inline-block;transition:transform .2s;font-size:14px;color:var(--muted);flex-shrink:0}
+.chapter.collapsed>h2 .caret{transform:rotate(-90deg)}
+.chapter{margin-bottom:34px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.chapter>h2{border-bottom:none;margin:0}
+.chapter .chapter-body{padding:8px 30px 26px}
+.chapter.collapsed .chapter-body{display:none}
+.chapter.collapsed>h2{border-radius:10px}
+#content h3{font-size:18px;margin:30px 0 10px;padding-left:12px;border-left:4px solid var(--accent)}
+#content h4{font-size:16px;margin:22px 0 8px}
+#content p{margin:12px 0}
+#content a{color:var(--accent)}
+#content strong{color:var(--accent-strong)}
+html.dark #content strong{color:var(--accent)}
+#content ul,#content ol{padding-left:26px}
+#content li{margin:5px 0}
+#content blockquote{
+  margin:14px 0;padding:12px 18px;border-left:4px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 8px 8px 0;color:var(--text);
+}
+#content blockquote p{margin:4px 0}
+#content hr{border:none;border-top:1px dashed var(--border);margin:26px 0}
+#content img{max-width:100%;border-radius:8px;border:1px solid var(--border)}
+.img-broken{
+  padding:24px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);
+  font-size:13px;text-align:center;background:var(--bg-alt);
+}
+
+/* 优先级徽章 */
+.badge{
+  display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;
+  color:#fff;vertical-align:middle;letter-spacing:1px;flex-shrink:0;
+}
+.badge-must{background:var(--badge-must)}
+.badge-rec{background:var(--badge-rec)}
+.badge-opt{background:var(--badge-opt)}
+#toc .badge{font-size:10px;padding:1px 7px;margin-left:6px}
+
+/* ============ 表格 ============ */
+.table-wrap{overflow-x:auto;margin:16px 0;border:1px solid var(--border);border-radius:10px}
+#content table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.6}
+#content th{
+  background:var(--accent);color:#fff;padding:9px 14px;text-align:left;font-weight:600;
+  white-space:nowrap;position:sticky;top:0;
+}
+#content td{padding:9px 14px;border-top:1px solid var(--border);vertical-align:top}
+#content tr:nth-child(even) td{background:var(--bg-alt)}
+#content td code,#content p code,#content li code{
+  background:var(--accent-soft);color:var(--accent-strong);padding:1px 6px;border-radius:5px;
+  font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;font-size:.88em;
+}
+html.dark #content td code,html.dark #content p code,html.dark #content li code{color:var(--accent)}
+
+/* ============ 代码块 ============ */
+.code-block{margin:16px 0;border-radius:10px;overflow:hidden;border:1px solid #33324a}
+.code-header{
+  display:flex;justify-content:space-between;align-items:center;
+  background:#2a293d;color:#a6adc8;font-size:12px;padding:5px 14px;font-family:Consolas,monospace;
+}
+.copy-btn{background:none;border:1px solid #45475a;color:#a6adc8;border-radius:6px;padding:2px 10px;font-size:11px;cursor:pointer}
+.copy-btn:hover{color:#fff;border-color:#7f849c}
+.code-block pre{margin:0;background:var(--code-bg);overflow-x:auto}
+.code-block pre code{
+  display:block;padding:14px 18px;font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;
+  font-size:13px;line-height:1.7;background:transparent;
+}
+#content pre code{color:#cdd6f4}
+
+/* ============ Mermaid ============ */
+.mermaid{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:20px;margin:16px 0;text-align:center;overflow-x:auto;
+}
+
+/* ============ 思维导图覆盖层 ============ */
+#mindmap-overlay{
+  display:none;position:fixed;inset:0;z-index:2000;background:var(--bg);flex-direction:column;
+}
+#mindmap-overlay.open{display:flex}
+#mindmap-toolbar{
+  display:flex;align-items:center;gap:10px;padding:10px 20px;
+  border-bottom:1px solid var(--border);background:var(--surface);
+}
+#mindmap-toolbar .hint{font-size:12px;color:var(--muted)}
+#mindmap{flex:1;width:100%}
+.markmap-node{cursor:pointer}
+.markmap-foreign{overflow:visible}
+
+/* ============ 回到顶部 / 提示条 ============ */
+#backtop{
+  position:fixed;right:26px;bottom:26px;z-index:900;width:44px;height:44px;border-radius:50%;
+  border:none;background:var(--accent);color:#fff;font-size:20px;cursor:pointer;display:none;
+  box-shadow:0 4px 14px rgba(194,65,12,.35);
+}
+#backtop:hover{background:var(--accent-strong)}
+#cdn-error{
+  display:none;margin:20px 0;padding:14px 18px;border:1px solid #c2410c;border-radius:10px;
+  background:#fdeadb;color:#9a3412;font-size:14px;
+}
+
+footer{color:var(--muted);font-size:12.5px;text-align:center;padding:30px;border-top:1px solid var(--border)}
+
+/* ============ 响应式 ============ */
+@media (max-width:960px){
+  #sidebar{
+    position:fixed;left:0;top:53px;bottom:0;z-index:950;width:280px;height:auto;
+    transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow);
+  }
+  #sidebar.open{transform:translateX(0)}
+  #hamburger{display:inline-block}
+  main{padding:24px 18px 100px}
+  header .title small{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progressbar"></div>
+
+<header>
+  <button id="hamburger" class="btn">☰</button>
+  <div class="title">📖 AI金融项目开发指南<small>企业流程版 · 交互阅读版</small></div>
+  <div class="spacer"></div>
+  <button class="btn" id="btn-expand-all">全部展开</button>
+  <button class="btn primary" id="btn-mindmap">🧠 思维导图</button>
+  <button class="btn" id="btn-dark">🌙 暗色</button>
+</header>
+
+<div id="layout">
+  <nav id="sidebar">
+    <input class="search" id="toc-search" placeholder="🔍 筛选章节…">
+    <ul id="toc"></ul>
+  </nav>
+  <main>
+    <div id="cdn-error">⚠️ 部分 CDN 资源加载失败（流程图 / 思维导图可能不可用）。请检查网络后刷新；正文阅读不受影响。</div>
+    <article id="content"></article>
+    <footer>由 <code>AI金融项目开发指南.md</code> 自动生成的交互阅读页 · 修改 md 后运行 <code>python build_interactive.py</code> 重新生成</footer>
+  </main>
+</div>
+
+<div id="mindmap-overlay">
+  <div id="mindmap-toolbar">
+    <strong>🧠 全书思维导图</strong>
+    <span class="hint">滚轮缩放 · 拖拽平移 · 点击节点折叠/展开</span>
+    <div class="spacer" style="flex:1"></div>
+    <button class="btn" id="mm-level1">只显章节</button>
+    <button class="btn" id="mm-level2">显到小节</button>
+    <button class="btn" id="mm-expand">全部展开</button>
+    <button class="btn" id="mm-fit">适应屏幕</button>
+    <button class="btn primary" id="mm-close">返回阅读</button>
+  </div>
+  <svg id="mindmap"></svg>
+</div>
+
+<button id="backtop" title="回到顶部">↑</button>
+
+<!-- 原始 Markdown 全文嵌入此处（由 build_interactive.py 注入，保证细节零丢失） -->
+<script type="text/markdown" id="md-source">
+__MARKDOWN_SOURCE__
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- 0. CDN 自检 ---------- */
+var cdnOk = !!(window.marked && window.mermaid && window.markmap && window.__markmapLib && window.d3);
+if(!cdnOk){ document.getElementById('cdn-error').style.display='block'; }
+
+/* ---------- 1. 渲染 Markdown ---------- */
+var rawMd = document.getElementById('md-source').textContent.replace(/^\n+/, '');
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+var renderer = {
+  code: function(code, lang){
+    lang = (lang || '').trim();
+    if(lang === 'mermaid'){
+      return '<pre class="mermaid">' + escapeHtml(code) + '</pre>';
+    }
+    var html;
+    if(window.hljs){
+      try{
+        html = (lang && hljs.getLanguage(lang))
+          ? hljs.highlight(code, {language: lang}).value
+          : hljs.highlightAuto(code).value;
+      }catch(e){ html = escapeHtml(code); }
+    }else{ html = escapeHtml(code); }
+    return '<div class="code-block"><div class="code-header"><span>' +
+      (lang || 'text') + '</span><button class="copy-btn" type="button">复制</button></div>' +
+      '<pre><code class="hljs">' + html + '</code></pre></div>';
+  },
+  table: function(header, body){
+    return '<div class="table-wrap"><table><thead>' + header + '</thead><tbody>' + body + '</tbody></table></div>';
+  }
+};
+
+var contentEl = document.getElementById('content');
+if(window.marked){
+  marked.use({ renderer: renderer, breaks: false, gfm: true });
+  contentEl.innerHTML = marked.parse(rawMd);
+}else{
+  contentEl.innerHTML = '<pre style="white-space:pre-wrap">' + escapeHtml(rawMd) + '</pre>';
+}
+
+/* ---------- 2. 图片兜底（assets 图片缺失时显示占位） ---------- */
+contentEl.querySelectorAll('img').forEach(function(img){
+  img.addEventListener('error', function(){
+    var div = document.createElement('div');
+    div.className = 'img-broken';
+    div.textContent = '🖼️ 图片缺失：' + (img.getAttribute('src') || '') + '（原文引用了该截图，但 assets 目录中没有此文件）';
+    img.replaceWith(div);
+  });
+});
+
+/* ---------- 3. 章节包裹 + 徽章 + 标题 id ---------- */
+var BADGE_MAP = { '必修':'badge-must', '建议':'badge-rec', '选修':'badge-opt' };
+var chapters = [];   // {h2, body, id}
+var h2idx = 0, h3idx = 0;
+
+(function wrapChapters(){
+  var nodes = Array.prototype.slice.call(contentEl.childNodes);
+  var current = null;
+  nodes.forEach(function(node){
+    if(node.nodeType === 1 && node.tagName === 'H2'){
+      var chapter = document.createElement('div');
+      chapter.className = 'chapter';
+      var body = document.createElement('div');
+      body.className = 'chapter-body';
+      contentEl.insertBefore(chapter, node);
+      chapter.appendChild(node);
+      chapter.appendChild(body);
+      current = { h2: node, body: body, chapter: chapter };
+      chapters.push(current);
+    }else if(current){
+      current.body.appendChild(node);
+    }
+  });
+})();
+
+chapters.forEach(function(c, i){
+  var h2 = c.h2;
+  h2.id = 'ch-' + (++h2idx);
+  // 把 `必修` 等 code 标记替换为徽章
+  h2.querySelectorAll('code').forEach(function(code){
+    var t = code.textContent.trim();
+    if(BADGE_MAP[t]){
+      var span = document.createElement('span');
+      span.className = 'badge ' + BADGE_MAP[t];
+      span.textContent = t;
+      code.replaceWith(span);
+    }
+  });
+  // 折叠箭头
+  var caret = document.createElement('span');
+  caret.className = 'caret';
+  caret.textContent = '▼';
+  h2.insertBefore(caret, h2.firstChild);
+  h2.addEventListener('click', function(){ c.chapter.classList.toggle('collapsed'); });
+  // h3 加 id
+  c.body.querySelectorAll('h3').forEach(function(h3){ h3.id = 'sec-' + (++h3idx); });
+});
+
+/* ---------- 4. 侧边目录 + 滚动高亮 ---------- */
+var tocEl = document.getElementById('toc');
+chapters.forEach(function(c){
+  var h2 = c.h2;
+  var li = document.createElement('li');
+  var a = document.createElement('a');
+  a.href = '#' + h2.id;
+  a.dataset.target = h2.id;
+  // 目录文本（徽章保留）
+  a.innerHTML = h2.innerHTML.replace(/^<span class="caret[^<]*<\/span>/, '');
+  a.querySelectorAll('.caret').forEach(function(x){ x.remove(); });
+  li.appendChild(a);
+
+  var h3s = c.body.querySelectorAll('h3');
+  if(h3s.length){
+    var sub = document.createElement('ul');
+    sub.style.cssText = 'list-style:none;margin:0;padding:0';
+    h3s.forEach(function(h3){
+      var sli = document.createElement('li');
+      sli.className = 'toc-h3';
+      var sa = document.createElement('a');
+      sa.href = '#' + h3.id;
+      sa.dataset.target = h3.id;
+      sa.textContent = h3.textContent;
+      sli.appendChild(sa);
+      sub.appendChild(sli);
+    });
+    li.appendChild(sub);
+  }
+  tocEl.appendChild(li);
+});
+
+tocEl.addEventListener('click', function(e){
+  var a = e.target.closest('a');
+  if(!a) return;
+  e.preventDefault();
+  var target = document.getElementById(a.dataset.target);
+  if(!target) return;
+  // 若章节被折叠则先展开
+  var chapter = target.closest('.chapter');
+  if(chapter && chapter.classList.contains('collapsed')) chapter.classList.remove('collapsed');
+  target.scrollIntoView({behavior:'smooth', block:'start'});
+  history.replaceState(null, '', a.getAttribute('href'));
+  document.getElementById('sidebar').classList.remove('open');
+});
+
+// 目录筛选
+document.getElementById('toc-search').addEventListener('input', function(){
+  var q = this.value.trim().toLowerCase();
+  tocEl.querySelectorAll(':scope > li').forEach(function(li){
+    li.style.display = (!q || li.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+  });
+});
+
+// 滚动高亮 + 进度条 + 回到顶部
+var spyTargets = Array.prototype.slice.call(contentEl.querySelectorAll('h2, h3'));
+var backtop = document.getElementById('backtop');
+window.addEventListener('scroll', function(){
+  var st = window.scrollY;
+  var h = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progressbar').style.width = (h > 0 ? (st / h * 100) : 0) + '%';
+  backtop.style.display = st > 600 ? 'block' : 'none';
+
+  var currentId = null;
+  for(var i = 0; i < spyTargets.length; i++){
+    if(spyTargets[i].getBoundingClientRect().top <= 90) currentId = spyTargets[i].id;
+    else break;
+  }
+  if(currentId){
+    tocEl.querySelectorAll('a.active').forEach(function(x){ x.classList.remove('active'); });
+    var link = tocEl.querySelector('a[data-target="' + currentId + '"]');
+    if(link) link.classList.add('active');
+  }
+}, {passive:true});
+backtop.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+
+/* ---------- 5. 顶栏按钮 ---------- */
+document.getElementById('hamburger').addEventListener('click', function(){
+  document.getElementById('sidebar').classList.toggle('open');
+});
+var btnExpand = document.getElementById('btn-expand-all');
+btnExpand.addEventListener('click', function(){
+  var anyCollapsed = contentEl.querySelector('.chapter.collapsed');
+  chapters.forEach(function(c){ c.chapter.classList.toggle('collapsed', !anyCollapsed); });
+  btnExpand.textContent = anyCollapsed ? '全部收起' : '全部展开';
+});
+var btnDark = document.getElementById('btn-dark');
+function applyDark(on){
+  document.documentElement.classList.toggle('dark', on);
+  btnDark.textContent = on ? '☀️ 亮色' : '🌙 暗色';
+  try{ localStorage.setItem('aifin-dark', on ? '1' : '0'); }catch(e){}
+}
+btnDark.addEventListener('click', function(){
+  applyDark(!document.documentElement.classList.contains('dark'));
+});
+try{ applyDark(localStorage.getItem('aifin-dark') === '1'); }catch(e){}
+
+/* ---------- 6. 代码复制 ---------- */
+contentEl.addEventListener('click', function(e){
+  var btn = e.target.closest('.copy-btn');
+  if(!btn) return;
+  var code = btn.closest('.code-block').querySelector('code').innerText;
+  function done(){ btn.textContent = '已复制 ✓'; setTimeout(function(){ btn.textContent = '复制'; }, 1500); }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(done, done);
+  }else{
+    var ta = document.createElement('textarea');
+    ta.value = code; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    ta.remove(); done();
+  }
+});
+
+/* ---------- 7. Mermaid 流程图 ---------- */
+if(window.mermaid){
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'neutral',
+    flowchart: { htmlLabels: true, curve: 'basis' },
+    securityLevel: 'loose'
+  });
+  mermaid.run({ querySelector: '.mermaid' }).catch(function(err){
+    console.warn('mermaid render error:', err);
+  });
+}
+
+/* ---------- 8. 思维导图（markmap） ---------- */
+function mdForMindmap(md){
+  var lines = md.split('\n');
+  var out = [];
+  var inFence = false;
+  for(var i = 0; i < lines.length; i++){
+    var line = lines[i];
+    var t = line.trim();
+    if(/^```/.test(t)){ inFence = !inFence; continue; }   // 去代码块
+    if(inFence) continue;
+    if(/^\|/.test(t)) continue;                            // 去表格
+    if(/^!\[/.test(t)) continue;                           // 去图片
+    if(/^---+$/.test(t)) continue;                         // 去分隔线
+    if(/^(#+\s|[-*]\s|\d+\.\s|>)/.test(t) || /^#{1,6}\s/.test(line)){
+      out.push(line.replace(/`(必修|建议|选修)`/g, '【$1】'));
+    }
+  }
+  return out.join('\n');
+}
+
+var mmInstance = null;
+var overlay = document.getElementById('mindmap-overlay');
+
+function openMindmap(){
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if(!window.markmap || !window.__markmapLib || !window.d3){
+    alert('思维导图组件加载失败（CDN 不可用），请检查网络后刷新。');
+    return;
+  }
+  if(!mmInstance){
+    var transformer = new window.__markmapLib.Transformer();
+    var result = transformer.transform(mdForMindmap(rawMd));
+    mmInstance = window.markmap.Markmap.create('#mindmap', {
+      initialExpandLevel: 2,
+      maxWidth: 420,
+      spacingVertical: 8,
+      paddingX: 24,
+      duration: 300
+    }, result.root);
+  }
+  setTimeout(function(){ mmInstance && mmInstance.fit(); }, 120);
+}
+function closeMindmap(){
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('btn-mindmap').addEventListener('click', openMindmap);
+document.getElementById('mm-close').addEventListener('click', closeMindmap);
+document.getElementById('mm-fit').addEventListener('click', function(){ mmInstance && mmInstance.fit(); });
+document.getElementById('mm-expand').addEventListener('click', function(){
+  if(!mmInstance) return;
+  mmInstance.setData(mmInstance.state.data); // 触发重绘
+  (function expandAll(node){
+    if(node.children){ node.payload && (node.payload.fold = 0); node.children.forEach(expandAll); }
+  })(mmInstance.state.data);
+  mmInstance.setData(mmInstance.state.data);
+  mmInstance.fit();
+});
+function collapseToLevel(level){
+  if(!mmInstance) return;
+  (function walk(node, depth){
+    if(node.children){
+      if(depth >= level){ node.payload = node.payload || {}; node.payload.fold = 1; }
+      else{ node.payload = node.payload || {}; node.payload.fold = 0; node.children.forEach(function(c){ walk(c, depth + 1); }); }
+    }
+  })(mmInstance.state.data, 0);
+  mmInstance.setData(mmInstance.state.data);
+  mmInstance.fit();
+}
+document.getElementById('mm-level1').addEventListener('click', function(){ collapseToLevel(2); });
+document.getElementById('mm-level2').addEventListener('click', function(){ collapseToLevel(3); });
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && overlay.classList.contains('open')) closeMindmap();
+});
+
+/* ---------- 9. 从 URL hash 定位 ---------- */
+if(location.hash){
+  var t = document.getElementById(location.hash.slice(1));
+  if(t){
+    var ch = t.closest('.chapter');
+    if(ch) ch.classList.remove('collapsed');
+    setTimeout(function(){ t.scrollIntoView(); }, 300);
+  }
+}
+})();
+</script>
+</body>
+</html>
